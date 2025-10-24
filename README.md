@@ -1,73 +1,71 @@
-# React + TypeScript + Vite
+# Arcade Grid
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A 2D grid-based arcade game built with PixiJS, React, and TypeScript. Experience classic arcade gameplay with modern web technologies.
 
-Currently, two official plugins are available:
+## 🎮 About the Game
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Arcade Grid is a fast-paced 2D game that combines strategy and reflexes in a grid-based environment. Players navigate through challenging levels, collecting power-ups, avoiding obstacles, and achieving high scores in this retro-inspired arcade experience.
 
-## React Compiler
+### Game Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Grid-based Movement**: Navigate through a dynamic grid system
+- **Power-ups & Collectibles**: Discover various items to enhance your gameplay
+- **Progressive Difficulty**: Levels that increase in complexity and challenge
+- **Score System**: Compete for high scores and achievements
+- **Smooth Animations**: Fluid 2D graphics powered by PixiJS
+- **Responsive Controls**: Intuitive keyboard and touch controls
 
-## Expanding the ESLint configuration
+### Technology Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **PixiJS**: High-performance 2D rendering engine
+- **React**: Modern UI framework for game interface
+- **TypeScript**: Type-safe development
+- **Vite**: Fast build tool and development server
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 🚀 Getting Started
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Prerequisites
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- Node.js (version 16 or higher)
+- npm or yarn
+
+### Installation
+
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+4. Open your browser and navigate to the local development URL
+
+### Building for Production
+
+```bash
+npm run build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🎯 Game Controls
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- **Arrow Keys**: Move your character
+- **Spacebar**: Action/Interact
+- **Enter**: Start game/Pause
+- **ESC**: Menu/Exit
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## 🛠️ Development
+
+This project uses modern web development tools:
+
+- **Vite** for fast development and building
+- **TypeScript** for type safety
+- **ESLint** for code quality
+- **PixiJS** for 2D game rendering
+
+## 📝 License
+
+This project is open source and available under the MIT License.

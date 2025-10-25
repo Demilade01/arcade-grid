@@ -1,5 +1,8 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Application, Graphics, Text, TextStyle } from 'pixi.js';
+import SettingsMenu, { type GameSettings } from './SettingsMenu';
+import GameStats from './GameStats';
+import { themes } from '../utils/themes';
 
 interface Position {
   x: number;
@@ -19,6 +22,26 @@ const SnakeGame: React.FC<SnakeGameProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const appRef = useRef<Application | null>(null);
+
+  // UI State
+  const [showSettings, setShowSettings] = useState(false);
+  const [showStats, setShowStats] = useState(false);
+  const [settings, setSettings] = useState<GameSettings>({
+    speed: 1,
+    gridSize: 20,
+    theme: 'dark',
+    showGrid: true,
+    soundEnabled: false
+  });
+
+  // Game Statistics
+  const [gameStats] = useState({
+    highScore: parseInt(localStorage.getItem('snakeHighScore') || '0'),
+    gamesPlayed: parseInt(localStorage.getItem('snakeGamesPlayed') || '0'),
+    bestStreak: parseInt(localStorage.getItem('snakeBestStreak') || '0'),
+    currentStreak: 0
+  });
+
   const gameStateRef = useRef({
     snake: [{ x: 10, y: 10 }] as Position[],
     direction: { x: 1, y: 0 },
@@ -28,7 +51,7 @@ const SnakeGame: React.FC<SnakeGameProps> = ({
     gameStarted: false,
     gamePaused: false,
     lastMoveTime: 0,
-    moveInterval: 1000 // milliseconds between moves
+    moveInterval: 500 // milliseconds between moves
   });
 
   useEffect(() => {
@@ -40,10 +63,12 @@ const SnakeGame: React.FC<SnakeGameProps> = ({
 
     let gameCleanup: (() => void) | undefined;
 
+    const currentTheme = themes[settings.theme];
+
     app.init({
       width,
       height,
-      backgroundColor: 0x1a1a1a,
+      backgroundColor: currentTheme.backgroundColor,
       canvas: canvasRef.current,
     }).then(() => {
       // Ensure the app is fully initialized before setting up the game
@@ -80,6 +105,7 @@ const SnakeGame: React.FC<SnakeGameProps> = ({
 
     const app = appRef.current;
     const gameState = gameStateRef.current;
+    const currentTheme = themes[settings.theme];
 
     // Create game board
     const board = new Graphics();
@@ -222,7 +248,7 @@ const SnakeGame: React.FC<SnakeGameProps> = ({
     const render = () => {
       // Clear previous frame
       app.stage.children.forEach(child => {
-        if (child !== board && child !== scoreText && child !== gameOverText && child !== startText) {
+        if (child !== board && child !== scoreText && child !== gameOverText && child !== startText && child !== pauseText) {
           app.stage.removeChild(child);
         }
       });
@@ -230,12 +256,12 @@ const SnakeGame: React.FC<SnakeGameProps> = ({
       // Draw snake
       gameState.snake.forEach((segment, index) => {
         const snakeSegment = new Graphics();
-        const color = index === 0 ? 0x00ff00 : 0x008800; // Head is brighter
+        const color = index === 0 ? currentTheme.snakeHeadColor : currentTheme.snakeBodyColor;
         snakeSegment.rect(
-          segment.x * gridSize + 1,
-          segment.y * gridSize + 1,
-          gridSize - 2,
-          gridSize - 2
+          segment.x * settings.gridSize + 1,
+          segment.y * settings.gridSize + 1,
+          settings.gridSize - 2,
+          settings.gridSize - 2
         );
         snakeSegment.fill(color);
         app.stage.addChild(snakeSegment);
@@ -244,12 +270,12 @@ const SnakeGame: React.FC<SnakeGameProps> = ({
       // Draw food
       const food = new Graphics();
       food.rect(
-        gameState.food.x * gridSize + 2,
-        gameState.food.y * gridSize + 2,
-        gridSize - 4,
-        gridSize - 4
+        gameState.food.x * settings.gridSize + 2,
+        gameState.food.y * settings.gridSize + 2,
+        settings.gridSize - 4,
+        settings.gridSize - 4
       );
-      food.fill(0xff0000);
+      food.fill(currentTheme.foodColor);
       app.stage.addChild(food);
     };
 
@@ -260,13 +286,27 @@ const SnakeGame: React.FC<SnakeGameProps> = ({
         return;
       }
 
-      if (!gameState.gameStarted && event.code === 'Space') {
-        gameState.gameStarted = true;
-        startText.visible = false;
+      // Handle pause/resume
+      if (event.code === 'Space') {
+        if (!gameState.gameStarted) {
+          gameState.gameStarted = true;
+          startText.visible = false;
+          return;
+        } else if (gameState.gameStarted && !gameState.gameOver) {
+          gameState.gamePaused = !gameState.gamePaused;
+          pauseText.visible = gameState.gamePaused;
+          return;
+        }
+      }
+
+      // Handle pause key (P key)
+      if (event.key.toLowerCase() === 'p' && gameState.gameStarted && !gameState.gameOver) {
+        gameState.gamePaused = !gameState.gamePaused;
+        pauseText.visible = gameState.gamePaused;
         return;
       }
 
-      if (!gameState.gameStarted) return;
+      if (!gameState.gameStarted || gameState.gamePaused) return;
 
       switch (event.key) {
         case 'ArrowUp':
@@ -299,10 +339,12 @@ const SnakeGame: React.FC<SnakeGameProps> = ({
       gameState.score = 0;
       gameState.gameOver = false;
       gameState.gameStarted = false;
+      gameState.gamePaused = false;
       gameState.lastMoveTime = 0;
-      gameState.moveInterval = 200; // Reset to initial speed
+      gameState.moveInterval = 1000; // Reset to initial speed
       scoreText.text = `Score: ${gameState.score}`;
       gameOverText.visible = false;
+      pauseText.visible = false;
       startText.visible = true;
     };
 
@@ -322,15 +364,88 @@ const SnakeGame: React.FC<SnakeGameProps> = ({
   };
 
   return (
-    <div className="flex flex-col items-center gap-4">
-      <h1 className="text-4xl font-bold text-white mb-4">Snake Game</h1>
-      <div className="border-2 border-gray-600 rounded-lg overflow-hidden">
-        <canvas ref={canvasRef} />
+    <div className="min-h-screen bg-gray-900 flex flex-col items-center gap-6 p-4">
+      {/* Header */}
+      <div className="text-center">
+        <h1 className="text-5xl font-bold mb-2 bg-linear-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+          Snake Game
+        </h1>
+        <p className="text-gray-400">Classic arcade fun with modern UI</p>
       </div>
-      <div className="text-white text-center">
-        <p className="mb-2">Use arrow keys to move</p>
-        <p>Press SPACE to start, R to restart</p>
+
+      {/* Main Game Area */}
+      <div className="flex gap-6 items-start">
+        {/* Game Canvas */}
+        <div className="flex flex-col items-center">
+          <div className="border-2 border-gray-600 rounded-lg overflow-hidden shadow-2xl">
+            <canvas ref={canvasRef} />
+          </div>
+
+          {/* Game Controls */}
+          <div className="mt-4 text-white text-center max-w-md">
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="font-semibold text-green-400 mb-1">Movement</p>
+                <p>Arrow Keys</p>
+              </div>
+              <div>
+                <p className="font-semibold text-blue-400 mb-1">Controls</p>
+                <p>SPACE: Start/Pause</p>
+                <p>P: Pause | R: Restart</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Side Panel */}
+        <div className="flex flex-col gap-4 w-80">
+          {/* Control Buttons */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowSettings(true)}
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors font-medium"
+            >
+              ⚙️ Settings
+            </button>
+            <button
+              onClick={() => setShowStats(!showStats)}
+              className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg transition-colors font-medium"
+            >
+              📊 Stats
+            </button>
+          </div>
+
+          {/* Game Statistics */}
+          {showStats && (
+            <GameStats
+              score={gameStateRef.current.score}
+              highScore={gameStats.highScore}
+              gamesPlayed={gameStats.gamesPlayed}
+              bestStreak={gameStats.bestStreak}
+              currentStreak={gameStats.currentStreak}
+            />
+          )}
+
+          {/* Quick Info */}
+          <div className="bg-gray-800 rounded-lg p-4 border border-gray-600">
+            <h3 className="text-lg font-bold text-white mb-3">Quick Tips</h3>
+            <ul className="text-sm text-gray-300 space-y-2">
+              <li>• Snake wraps around edges</li>
+              <li>• Only dies when hitting itself</li>
+              <li>• Speed increases with score</li>
+              <li>• Try different themes!</li>
+            </ul>
+          </div>
+        </div>
       </div>
+
+      {/* Settings Modal */}
+      <SettingsMenu
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        onSettingsChange={setSettings}
+        currentSettings={settings}
+      />
     </div>
   );
 };

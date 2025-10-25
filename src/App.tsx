@@ -1,8 +1,11 @@
 
-function App() {
+import SnakeGame from './components/SnakeGame'
 
+function App() {
   return (
-   <h1 className="text-3xl font-bold underline">Hello World</h1>
+    <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+      <SnakeGame />
+    </div>
   )
 }
 
